@@ -240,18 +240,16 @@ pub const AwsProtocol = enum {
 pub fn parse(allocator: std.mem.Allocator, json_model: []const u8) !Smithy {
     // construct a parser. We're not copying strings here, but that may
     // be a poor decision
-    var parser = std.json.Parser.init(allocator, false);
-    defer parser.deinit();
-    var vt = try parser.parse(json_model);
+    var vt = try std.json.parseFromSlice(std.json.Value, allocator, json_model, .{});
     defer vt.deinit();
     return Smithy.init(
         allocator,
-        vt.root.Object.get("smithy").?.String,
+        vt.value.object.get("smithy").?.string,
         ModelMetadata{
             // TODO: implement
             .suppressions = &.{},
         },
-        try shapes(allocator, vt.root.Object.get("shapes").?.Object),
+        try shapes(allocator, vt.value.object.get("shapes").?.object),
     );
 }
 
@@ -334,68 +332,68 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
 }
 
 fn getShape(allocator: std.mem.Allocator, shape: std.json.Value) SmithyParseError!Shape {
-    const shape_type = shape.Object.get("type").?.String;
+    const shape_type = shape.object.get("type").?.string;
     if (std.mem.eql(u8, shape_type, "service"))
         return Shape{
             .service = .{
-                .version = shape.Object.get("version").?.String,
-                .operations = if (shape.Object.get("operations")) |ops|
-                    try parseTargetList(allocator, ops.Array)
+                .version = shape.object.get("version").?.string,
+                .operations = if (shape.object.get("operations")) |ops|
+                    try parseTargetList(allocator, ops.array)
                 else
                     &.{}, // this doesn't make much sense, but it's happening
                 // TODO: implement. We need some sample data tho
                 .resources = &.{},
-                .traits = try parseTraits(allocator, shape.Object.get("traits")),
+                .traits = try parseTraits(allocator, shape.object.get("traits")),
             },
         };
     if (std.mem.eql(u8, shape_type, "structure"))
         return Shape{
             .structure = .{
-                .members = try parseMembers(allocator, shape.Object.get("members")),
-                .traits = try parseTraits(allocator, shape.Object.get("traits")),
+                .members = try parseMembers(allocator, shape.object.get("members")),
+                .traits = try parseTraits(allocator, shape.object.get("traits")),
             },
         };
     if (std.mem.eql(u8, shape_type, "union"))
         return Shape{
             .uniontype = .{
-                .members = try parseMembers(allocator, shape.Object.get("members")),
-                .traits = try parseTraits(allocator, shape.Object.get("traits")),
+                .members = try parseMembers(allocator, shape.object.get("members")),
+                .traits = try parseTraits(allocator, shape.object.get("traits")),
             },
         };
     if (std.mem.eql(u8, shape_type, "operation"))
         return Shape{
             .operation = .{
-                .input = if (shape.Object.get("input")) |member| member.Object.get("target").?.String else null,
-                .output = if (shape.Object.get("output")) |member| member.Object.get("target").?.String else null,
+                .input = if (shape.object.get("input")) |member| member.object.get("target").?.string else null,
+                .output = if (shape.object.get("output")) |member| member.object.get("target").?.string else null,
                 .errors = blk: {
-                    if (shape.Object.get("errors")) |e| {
-                        break :blk try parseTargetList(allocator, e.Array);
+                    if (shape.object.get("errors")) |e| {
+                        break :blk try parseTargetList(allocator, e.array);
                     }
                     break :blk null;
                 },
-                .traits = try parseTraits(allocator, shape.Object.get("traits")),
+                .traits = try parseTraits(allocator, shape.object.get("traits")),
             },
         };
     if (std.mem.eql(u8, shape_type, "list"))
         return Shape{
             .list = .{
-                .member_target = shape.Object.get("member").?.Object.get("target").?.String,
-                .traits = try parseTraits(allocator, shape.Object.get("traits")),
+                .member_target = shape.object.get("member").?.object.get("target").?.string,
+                .traits = try parseTraits(allocator, shape.object.get("traits")),
             },
         };
     if (std.mem.eql(u8, shape_type, "set"))
         return Shape{
             .set = .{
-                .member_target = shape.Object.get("member").?.Object.get("target").?.String,
-                .traits = try parseTraits(allocator, shape.Object.get("traits")),
+                .member_target = shape.object.get("member").?.object.get("target").?.string,
+                .traits = try parseTraits(allocator, shape.object.get("traits")),
             },
         };
     if (std.mem.eql(u8, shape_type, "map"))
         return Shape{
             .map = .{
-                .key = shape.Object.get("key").?.Object.get("target").?.String,
-                .value = shape.Object.get("value").?.Object.get("target").?.String,
-                .traits = try parseTraits(allocator, shape.Object.get("traits")),
+                .key = shape.object.get("key").?.object.get("target").?.string,
+                .value = shape.object.get("value").?.object.get("target").?.string,
+                .traits = try parseTraits(allocator, shape.object.get("traits")),
             },
         };
     if (std.mem.eql(u8, shape_type, "string"))
@@ -438,15 +436,15 @@ fn parseMembers(allocator: std.mem.Allocator, shape: ?std.json.Value) SmithyPars
     if (shape == null)
         return rc;
 
-    const map = shape.?.Object;
+    const map = shape.?.object;
     var list = std.ArrayList(TypeMember).initCapacity(allocator, map.count()) catch return SmithyParseError.OutOfMemory;
     defer list.deinit();
     var iterator = map.iterator();
     while (iterator.next()) |kv| {
         try list.append(TypeMember{
             .name = kv.key_ptr.*,
-            .target = kv.value_ptr.*.Object.get("target").?.String,
-            .traits = try parseTraits(allocator, kv.value_ptr.*.Object.get("traits")),
+            .target = kv.value_ptr.*.object.get("target").?.string,
+            .traits = try parseTraits(allocator, kv.value_ptr.*.object.get("traits")),
         });
     }
     return list.toOwnedSlice();
@@ -457,13 +455,13 @@ fn parseTargetList(allocator: std.mem.Allocator, list: anytype) SmithyParseError
     var array_list = std.ArrayList([]const u8).initCapacity(allocator, list.items.len) catch return SmithyParseError.OutOfMemory;
     defer array_list.deinit();
     for (list.items) |i| {
-        try array_list.append(i.Object.get("target").?.String);
+        try array_list.append(i.object.get("target").?.string);
     }
     return array_list.toOwnedSlice();
 }
 fn parseTraitsOnly(allocator: std.mem.Allocator, shape: std.json.Value) SmithyParseError!TraitsOnly {
     return TraitsOnly{
-        .traits = try parseTraits(allocator, shape.Object.get("traits")),
+        .traits = try parseTraits(allocator, shape.object.get("traits")),
     };
 }
 
@@ -472,7 +470,7 @@ fn parseTraits(allocator: std.mem.Allocator, shape: ?std.json.Value) SmithyParse
     if (shape == null)
         return rc;
 
-    const map = shape.?.Object;
+    const map = shape.?.object;
     var list = std.ArrayList(Trait).initCapacity(allocator, map.count()) catch return SmithyParseError.OutOfMemory;
     defer list.deinit();
     var iterator = map.iterator();
@@ -487,18 +485,18 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
     if (std.mem.eql(u8, trait_type, "aws.api#service"))
         return Trait{
             .aws_api_service = .{
-                .sdk_id = value.Object.get("sdkId").?.String,
-                .arn_namespace = value.Object.get("arnNamespace").?.String,
-                .cloudformation_name = value.Object.get("cloudFormationName").?.String,
-                .cloudtrail_event_source = value.Object.get("cloudTrailEventSource").?.String,
+                .sdk_id = value.object.get("sdkId").?.string,
+                .arn_namespace = value.object.get("arnNamespace").?.string,
+                .cloudformation_name = value.object.get("cloudFormationName").?.string,
+                .cloudtrail_event_source = value.object.get("cloudTrailEventSource").?.string,
                 // what good is a service without an endpoint? I don't know - ask amp
-                .endpoint_prefix = if (value.Object.get("endpointPrefix")) |endpoint| endpoint.String else "",
+                .endpoint_prefix = if (value.object.get("endpointPrefix")) |endpoint| endpoint.string else "",
             },
         };
     if (std.mem.eql(u8, trait_type, "aws.auth#sigv4"))
         return Trait{
             .aws_auth_sigv4 = .{
-                .name = value.Object.get("name").?.String,
+                .name = value.object.get("name").?.string,
             },
         };
     if (std.mem.eql(u8, trait_type, "smithy.api#required"))
@@ -548,33 +546,33 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         };
 
     if (std.mem.eql(u8, trait_type, "smithy.api#documentation"))
-        return Trait{ .documentation = value.String };
+        return Trait{ .documentation = value.string };
     if (std.mem.eql(u8, trait_type, "smithy.api#pattern"))
-        return Trait{ .pattern = value.String };
+        return Trait{ .pattern = value.string };
 
     if (std.mem.eql(u8, trait_type, "aws.protocols#ec2QueryName"))
-        return Trait{ .ec2_query_name = value.String };
+        return Trait{ .ec2_query_name = value.string };
 
     if (std.mem.eql(u8, trait_type, "smithy.api#http")) {
         var code: i64 = 200;
-        if (value.Object.get("code")) |v| {
-            if (v == .Integer)
-                code = v.Integer;
+        if (value.object.get("code")) |v| {
+            if (v == .integer)
+                code = v.integer;
         }
         return Trait{ .http = .{
-            .method = value.Object.get("method").?.String,
-            .uri = value.Object.get("uri").?.String,
+            .method = value.object.get("method").?.string,
+            .uri = value.object.get("uri").?.string,
             .code = code,
         } };
     }
     if (std.mem.eql(u8, trait_type, "smithy.api#jsonName"))
-        return Trait{ .json_name = value.String };
+        return Trait{ .json_name = value.string };
     if (std.mem.eql(u8, trait_type, "smithy.api#xmlName"))
-        return Trait{ .xml_name = value.String };
+        return Trait{ .xml_name = value.string };
     if (std.mem.eql(u8, trait_type, "smithy.api#httpQuery"))
-        return Trait{ .http_query = value.String };
+        return Trait{ .http_query = value.string };
     if (std.mem.eql(u8, trait_type, "smithy.api#httpHeader"))
-        return Trait{ .http_header = value.String };
+        return Trait{ .http_header = value.string };
     if (std.mem.eql(u8, trait_type, "smithy.api#httpPayload"))
         return Trait{ .http_payload = .{} };
 
@@ -637,11 +635,11 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
     return null;
 }
 fn getOptionalNumber(value: std.json.Value, key: []const u8) ?f64 {
-    if (value.Object.get(key)) |v|
+    if (value.object.get(key)) |v|
         return switch (v) {
-            .Integer => @intToFloat(f64, v.Integer),
-            .Float => v.Float,
-            .Null, .Bool, .NumberString, .String, .Array, .Object => null,
+            .integer => @as(f64, @floatFromInt(v.integer)),
+            .float => v.float,
+            .null, .bool, .number_string, .string, .array, .object => null,
         };
     return null;
 }
@@ -687,22 +685,9 @@ fn read_file_to_string(allocator: std.mem.Allocator, file_name: []const u8, max_
     defer file.close();
     return file.readToEndAlloc(allocator, max_bytes);
 }
-var test_data: ?[]const u8 = null;
+const test_data: []const u8 = @embedFile("test.json");
 const intrinsic_type_count: usize = 5; // 5 intrinsic types are added to every model
 
-fn getTestData(_: *std.mem.Allocator) []const u8 {
-    if (test_data) |d| return d;
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    test_data = read_file_to_string(gpa.allocator, "test.json", 150000) catch @panic("could not read test.json");
-    return test_data.?;
-}
-test "read file" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer if (gpa.deinit()) @panic("leak");
-    const allocator = gpa.allocator;
-    _ = getTestData(allocator);
-    // test stuff
-}
 test "parse string" {
     const test_string =
         \\ {
@@ -723,9 +708,7 @@ test "parse string" {
         \\
     ;
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer if (gpa.deinit()) @panic("leak");
-    const allocator = gpa.allocator;
+    const allocator = std.testing.allocator;
     const model = try parse(allocator, test_string);
     defer model.deinit();
     try expect(std.mem.eql(u8, model.version, "1.0"));
@@ -757,9 +740,7 @@ test "parse shape with member" {
         \\
     ;
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer if (gpa.deinit()) @panic("leak");
-    const allocator = gpa.allocator;
+    const allocator = std.testing.allocator;
     const model = try parse(allocator, test_string);
     defer model.deinit();
     try expect(std.mem.eql(u8, model.version, "1.0"));
@@ -771,11 +752,8 @@ test "parse shape with member" {
     try std.testing.expectEqualStrings("member", model.shapes[0].member.?);
 }
 test "parse file" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer if (gpa.deinit()) @panic("leak");
-    const allocator = gpa.allocator;
-    const test_string = getTestData(allocator);
-    const model = try parse(allocator, test_string);
+    const allocator = std.testing.allocator;
+    const model = try parse(allocator, test_data);
     defer model.deinit();
     try std.testing.expectEqualStrings(model.version, "1.0");
     // metadata expectations
