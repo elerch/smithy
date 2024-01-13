@@ -7,14 +7,16 @@ pub const Smithy = struct {
     metadata: ModelMetadata,
     shapes: []ShapeInfo,
     allocator: std.mem.Allocator,
+    json_source: std.json.Parsed(std.json.Value),
 
     const Self = @This();
-    pub fn init(allocator: std.mem.Allocator, version: []const u8, metadata: ModelMetadata, shapeinfo: []ShapeInfo) Smithy {
+    pub fn init(allocator: std.mem.Allocator, version: []const u8, metadata: ModelMetadata, shapeinfo: []ShapeInfo, json_source: std.json.Parsed(std.json.Value)) Smithy {
         return .{
             .version = version,
             .metadata = metadata,
             .shapes = shapeinfo,
             .allocator = allocator,
+            .json_source = json_source,
         };
     }
     pub fn deinit(self: Self) void {
@@ -76,6 +78,7 @@ pub const Smithy = struct {
             }
         }
         self.allocator.free(self.shapes);
+        self.json_source.deinit();
     }
 };
 pub const ShapeInfo = struct {
@@ -99,6 +102,8 @@ pub const TraitType = enum {
     aws_auth_sigv4,
     aws_protocol,
     ec2_query_name,
+    json_name,
+    xml_name,
     http,
     http_header,
     http_label,
@@ -262,10 +267,10 @@ pub const AwsProtocol = enum {
 };
 
 pub fn parse(allocator: std.mem.Allocator, json_model: []const u8) !Smithy {
-    // construct a parser. We're not copying strings here, but that may
-    // be a poor decision
+    // construct a parser. We're not copying strings here
+    // Instead, we keep the original json string around
+    // This might be bad if we only need a small fraction of the original json source
     var vt = try std.json.parseFromSlice(std.json.Value, allocator, json_model, .{});
-    defer vt.deinit();
     return Smithy.init(
         allocator,
         vt.value.object.get("smithy").?.string,
@@ -274,6 +279,7 @@ pub fn parse(allocator: std.mem.Allocator, json_model: []const u8) !Smithy {
             .suppressions = &.{},
         },
         try shapes(allocator, vt.value.object.get("shapes").?.object),
+        vt,
     );
 }
 
@@ -581,7 +587,7 @@ fn getShape(allocator: std.mem.Allocator, shape: std.json.Value) SmithyParseErro
 }
 
 fn parseMembers(allocator: std.mem.Allocator, shape: ?std.json.Value) SmithyParseError![]TypeMember {
-    var rc: []TypeMember = &.{};
+    const rc: []TypeMember = &.{};
     if (shape == null)
         return rc;
 
@@ -615,7 +621,7 @@ fn parseTraitsOnly(allocator: std.mem.Allocator, shape: std.json.Value) SmithyPa
 }
 
 fn parseTraits(allocator: std.mem.Allocator, shape: ?std.json.Value) SmithyParseError![]Trait {
-    var rc: []Trait = &.{};
+    const rc: []Trait = &.{};
     if (shape == null)
         return rc;
 
