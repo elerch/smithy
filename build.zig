@@ -30,9 +30,9 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(lib);
 
     const module = b.addModule("smithy", .{
-        .source_file = .{ .path = "src/smithy.zig" },
+        .root_source_file = .{ .path = "src/smithy.zig" },
     });
-    lib.addModule("smithy", module);
+    lib.root_module.addImport("smithy", module);
 
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.
