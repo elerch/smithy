@@ -65,6 +65,14 @@ pub const Smithy = struct {
                     self.allocator.free(v.value);
                     self.allocator.free(v.traits);
                 },
+                .@"enum" => |v| {
+                    for (v.members) |m| self.allocator.free(m.traits);
+                    self.allocator.free(v.members);
+                    self.allocator.free(v.traits);
+                },
+                .unit => |v| {
+                    self.allocator.free(v.traits);
+                },
             }
         }
         self.allocator.free(self.shapes);
@@ -167,6 +175,8 @@ const ShapeType = enum {
     service,
     operation,
     resource,
+    @"enum",
+    unit,
 };
 const TraitsOnly = struct {
     traits: []Trait,
@@ -225,6 +235,11 @@ const Shape = union(ShapeType) {
         traits: []Trait,
     },
     resource: TraitsOnly,
+    @"enum": struct {
+        members: []TypeMember,
+        traits: []Trait,
+    },
+    unit: TraitsOnly,
 };
 
 // https://awslabs.github.io/smithy/1.0/spec/aws/index.html
@@ -426,6 +441,13 @@ fn getShape(allocator: std.mem.Allocator, shape: std.json.Value) SmithyParseErro
         return Shape{ .member = try parseTraitsOnly(allocator, shape) };
     if (std.mem.eql(u8, shape_type, "resource"))
         return Shape{ .resource = try parseTraitsOnly(allocator, shape) };
+    if (std.mem.eql(u8, shape_type, "enum"))
+        return Shape{
+            .@"enum" = .{
+                .members = try parseMembers(allocator, shape.object.get("members")),
+                .traits = try parseTraits(allocator, shape.object.get("traits")),
+            },
+        };
 
     std.debug.print("Invalid Type: {s}", .{shape_type});
     return SmithyParseError.InvalidType;
