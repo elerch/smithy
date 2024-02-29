@@ -623,7 +623,45 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         \\smithy.api#xmlAttribute
         \\smithy.api#xmlFlattened
         \\smithy.waiters#waitable
-    ;
+        \\smithy.rules#endpointTests
+        \\smithy.api#input
+        \\smithy.api#output
+        \\smithy.api#default
+        \\smithy.api#examples
+        \\smithy.api#uniqueItems
+        \\smithy.api#addedDefault
+        \\smithy.api#resourceIdentifier
+        \\smithy.api#unstable
+        \\smithy.api#property
+        \\smithy.api#notProperty
+        \\smithy.api#recommended
+        \\smithy.api#httpBearerAuth
+        \\smithy.api#nestedProperties
+        \\smithy.rules#endpointRuleSet
+        \\smithy.rules#contextParam
+        \\smithy.rules#clientContextParams
+        \\smithy.rules#staticContextParams
+        \\aws.cloudformation#cfnResource
+        \\aws.cloudformation#cfnMutability
+        \\aws.cloudformation#cfnExcludeProperty
+        \\aws.cloudformation#cfnAdditionalIdentifier
+        \\aws.iam#actionPermissionDescription
+        \\aws.iam#requiredActions
+        \\aws.iam#conditionKeys
+        \\aws.iam#iamResource
+        \\aws.iam#iamAction
+        \\aws.iam#supportedPrincipalTypes
+        \\aws.iam#defineConditionKeys
+        \\aws.iam#actionName
+        \\aws.api#data
+        \\aws.api#controlPlane
+        \\aws.api#dataPlane
+        \\aws.api#tagEnabled
+        \\aws.api#taggable
+        \\aws.protocols#awsQueryCompatible
+        \\aws.protocols#httpChecksum
+        \\aws.customizations#s3UnwrappedXmlOutput
+    ; // NOTE: inputs/outputs are not used in AWS models, but default is and might be handy
     var iterator = std.mem.split(u8, list, "\n");
     while (iterator.next()) |known_but_unimplemented| {
         if (std.mem.eql(u8, trait_type, known_but_unimplemented))
