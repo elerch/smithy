@@ -346,6 +346,121 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
+    try list.append(.{
+        .id = "smithy.api#Blob",
+        .namespace = "smithy.api",
+        .name = "Blob",
+        .member = null,
+        .shape = Shape{
+            .blob = .{
+                .traits = &.{},
+            },
+        },
+    });
+    try list.append(.{
+        .id = "smithy.api#Unit",
+        .namespace = "smithy.api",
+        .name = "Unit",
+        .member = null,
+        .shape = Shape{
+            .unit = .{
+                .traits = &.{},
+            },
+        },
+    });
+    try list.append(.{
+        .id = "smithy.api#Long",
+        .namespace = "smithy.api",
+        .name = "Long",
+        .member = null,
+        .shape = Shape{
+            .long = .{
+                .traits = &.{},
+            },
+        },
+    });
+    try list.append(.{
+        .id = "smithy.api#Float",
+        .namespace = "smithy.api",
+        .name = "Float",
+        .member = null,
+        .shape = Shape{
+            .float = .{
+                .traits = &.{},
+            },
+        },
+    });
+    try list.append(.{
+        .id = "smithy.api#Document",
+        .namespace = "smithy.api",
+        .name = "Document",
+        .member = null,
+        .shape = Shape{
+            .document = .{
+                .traits = &.{},
+            },
+        },
+    });
+    // These "Primitive" versions only appear to differ in that they have defaults
+    // defined. Not currently handled:
+    // byte PrimitiveByte
+    // short PrimitiveShort
+
+    try list.append(.{
+        .id = "smithy.api#PrimitiveBoolean",
+        .namespace = "smithy.api",
+        .name = "PrimitiveBoolean",
+        .member = null,
+        .shape = Shape{
+            .boolean = .{
+                .traits = &.{},
+            },
+        },
+    });
+    try list.append(.{
+        .id = "smithy.api#PrimitiveInteger",
+        .namespace = "smithy.api",
+        .name = "PrimitiveInteger",
+        .member = null,
+        .shape = Shape{
+            .integer = .{
+                .traits = &.{},
+            },
+        },
+    });
+    try list.append(.{
+        .id = "smithy.api#PrimitiveDouble",
+        .namespace = "smithy.api",
+        .name = "PrimitiveDouble",
+        .member = null,
+        .shape = Shape{
+            .double = .{
+                .traits = &.{},
+            },
+        },
+    });
+    try list.append(.{
+        .id = "smithy.api#PrimitiveLong",
+        .namespace = "smithy.api",
+        .name = "PrimitiveLong",
+        .member = null,
+        .shape = Shape{
+            .long = .{
+                .traits = &.{},
+            },
+        },
+    });
+    try list.append(.{
+        .id = "smithy.api#PrimitiveFloat",
+        .namespace = "smithy.api",
+        .name = "PrimitiveFloat",
+        .member = null,
+        .shape = Shape{
+            .float = .{
+                .traits = &.{},
+            },
+        },
+    });
     return list.toOwnedSlice();
 }
 
