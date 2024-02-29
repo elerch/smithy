@@ -106,13 +106,16 @@ pub const TraitType = enum {
     http_payload,
     json_name,
     xml_name,
-    required,
+    required, // required on the server
+    client_optional, // optional as far as the client is concerned
     documentation,
     pattern,
     range,
     length,
     box,
     sparse,
+    enum_value,
+    aws_query_error,
 };
 pub const Trait = union(TraitType) {
     aws_api_service: struct {
@@ -139,6 +142,7 @@ pub const Trait = union(TraitType) {
     http_query: []const u8,
     http_payload: struct {},
     required: struct {},
+    client_optional: void,
     documentation: []const u8,
     pattern: []const u8,
     range: struct { // most data is actually integers, but as some are floats, we'll use that here
@@ -151,6 +155,11 @@ pub const Trait = union(TraitType) {
     },
     box: struct {},
     sparse: struct {},
+    enum_value: []const u8,
+    aws_query_error: struct {
+        http_response_code: i64,
+        code: []const u8,
+    },
 };
 const ShapeType = enum {
     blob,
@@ -641,6 +650,8 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         };
     if (std.mem.eql(u8, trait_type, "smithy.api#required"))
         return Trait{ .required = .{} };
+    if (std.mem.eql(u8, trait_type, "smithy.api#clientOptional"))
+        return Trait{ .client_optional = {} };
     if (std.mem.eql(u8, trait_type, "smithy.api#sparse"))
         return Trait{ .sparse = .{} };
     if (std.mem.eql(u8, trait_type, "smithy.api#box"))
@@ -705,6 +716,14 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
             .code = code,
         } };
     }
+    if (std.mem.eql(u8, trait_type, "aws.protocols#awsQueryError")) {
+        return Trait{
+            .aws_query_error = .{
+                .code = value.object.get("code").?.string, // code is required
+                .http_response_code = value.object.get("httpResponseCode").?.integer,
+            },
+        };
+    }
     if (std.mem.eql(u8, trait_type, "smithy.api#jsonName"))
         return Trait{ .json_name = value.string };
     if (std.mem.eql(u8, trait_type, "smithy.api#xmlName"))
@@ -722,6 +741,10 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
 
     if (std.mem.eql(u8, trait_type, "smithy.api#xmlNamespace"))
         return null;
+
+    if (std.mem.eql(u8, trait_type, "smithy.api#enumValue"))
+        return Trait{ .enum_value = value.string };
+
     // TODO: win argument with compiler to get this comptime
     const list =
         \\aws.api#arnReference
