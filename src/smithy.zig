@@ -281,7 +281,10 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             .namespace = id_info.namespace,
             .name = id_info.name,
             .member = id_info.member,
-            .shape = try getShape(allocator, kv.value_ptr.*),
+            .shape = getShape(allocator, kv.value_ptr.*) catch |e| {
+                std.log.err("Caught error parsing shape with name {s}: {}", .{ id_info.name, e });
+                return e;
+            },
         });
     }
     // This seems to be a synonym for the simple type "string"
