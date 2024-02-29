@@ -117,9 +117,9 @@ pub const TraitType = enum {
 pub const Trait = union(TraitType) {
     aws_api_service: struct {
         sdk_id: []const u8,
-        arn_namespace: []const u8,
-        cloudformation_name: []const u8,
-        cloudtrail_event_source: []const u8,
+        arn_namespace: ?[]const u8,
+        cloudformation_name: ?[]const u8,
+        cloudtrail_event_source: ?[]const u8,
         endpoint_prefix: []const u8,
     },
     aws_auth_sigv4: struct {
@@ -508,9 +508,9 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         return Trait{
             .aws_api_service = .{
                 .sdk_id = value.object.get("sdkId").?.string,
-                .arn_namespace = value.object.get("arnNamespace").?.string,
-                .cloudformation_name = value.object.get("cloudFormationName").?.string,
-                .cloudtrail_event_source = value.object.get("cloudTrailEventSource").?.string,
+                .arn_namespace = if (value.object.get("arnNamespace")) |a| a.string else null,
+                .cloudformation_name = if (value.object.get("cloudFormationName")) |n| n.string else null,
+                .cloudtrail_event_source = if (value.object.get("cloudTrailEventSource")) |s| s.string else null,
                 // what good is a service without an endpoint? I don't know - ask amp
                 .endpoint_prefix = if (value.object.get("endpointPrefix")) |endpoint| endpoint.string else "",
             },
