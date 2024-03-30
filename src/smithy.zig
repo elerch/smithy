@@ -102,8 +102,6 @@ pub const TraitType = enum {
     aws_auth_sigv4,
     aws_protocol,
     ec2_query_name,
-    json_name,
-    xml_name,
     http,
     http_header,
     http_label,
@@ -893,7 +891,7 @@ fn read_file_to_string(allocator: std.mem.Allocator, file_name: []const u8, max_
     return file.readToEndAlloc(allocator, max_bytes);
 }
 const test_data: []const u8 = @embedFile("test.json");
-const intrinsic_type_count: usize = 5; // 5 intrinsic types are added to every model
+const intrinsic_type_count: usize = 15; // 15 intrinsic types are added to every model (see shapes() function)
 
 test "parse string" {
     const test_string =
