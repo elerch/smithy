@@ -133,8 +133,6 @@ pub const Trait = union(TraitType) {
     },
     aws_protocol: AwsProtocol,
     ec2_query_name: []const u8,
-    json_name: []const u8,
-    xml_name: []const u8,
     http: struct {
         method: []const u8,
         uri: []const u8,
@@ -144,6 +142,8 @@ pub const Trait = union(TraitType) {
     http_label: []const u8,
     http_query: []const u8,
     http_payload: struct {},
+    json_name: []const u8,
+    xml_name: []const u8,
     required: struct {},
     client_optional: void,
     documentation: []const u8,
