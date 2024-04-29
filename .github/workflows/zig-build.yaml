@@ -7,6 +7,7 @@ on:
       - '!zig-develop*'
 jobs:
   build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: elerch/setup-zig@v3
