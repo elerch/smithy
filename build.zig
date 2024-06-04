@@ -19,7 +19,7 @@ pub fn build(b: *std.Build) void {
         .name = "smithy",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
-        .root_source_file = .{ .path = "src/smithy.zig" },
+        .root_source_file = b.path("src/smithy.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -30,14 +30,14 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(lib);
 
     const module = b.addModule("smithy", .{
-        .root_source_file = .{ .path = "src/smithy.zig" },
+        .root_source_file = b.path("src/smithy.zig"),
     });
     lib.root_module.addImport("smithy", module);
 
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.
     const main_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/smithy.zig" },
+        .root_source_file = b.path("src/smithy.zig"),
         .target = target,
         .optimize = optimize,
     });
