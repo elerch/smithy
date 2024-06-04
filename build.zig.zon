@@ -1,0 +1,14 @@
+.{
+    .name = "smithy",
+    .version = "1.0.0",
+    .paths = .{
+      "build.zig",
+      "build.zig.zon",
+      "src",
+      "README.md",
+      "LICENSE.md",
+    },
+
+    .dependencies = .{
+    },
+}
