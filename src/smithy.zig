@@ -829,7 +829,7 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         \\aws.protocols#httpChecksum
         \\aws.customizations#s3UnwrappedXmlOutput
     ; // NOTE: inputs/outputs are not used in AWS models, but default is and might be handy
-    var iterator = std.mem.split(u8, list, "\n");
+    var iterator = std.mem.splitScalar(u8, list, '\n');
     while (iterator.next()) |known_but_unimplemented| {
         if (std.mem.eql(u8, trait_type, known_but_unimplemented))
             return null;
