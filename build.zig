@@ -50,3 +50,7 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run library tests");
     test_step.dependOn(&run_main_tests.step);
 }
+
+// define AwsProtocol to support usage within build.zig as an import
+const smithy = @import("src/smithy.zig");
+pub const AwsProtocol = smithy.AwsProtocol;
