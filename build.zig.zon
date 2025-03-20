@@ -1,14 +1,14 @@
 .{
-    .name = "smithy",
+    .name = .smithy,
     .version = "1.0.0",
+    .fingerprint = 0xccfd3d0281810cb8,
     .paths = .{
-      "build.zig",
-      "build.zig.zon",
-      "src",
-      "README.md",
-      "LICENSE",
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "README.md",
+        "LICENSE",
     },
 
-    .dependencies = .{
-    },
+    .dependencies = .{},
 }
