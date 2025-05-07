@@ -804,18 +804,23 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         \\smithy.api#recommended
         \\smithy.api#httpBearerAuth
         \\smithy.api#nestedProperties
+        \\smithy.api#private
         \\smithy.rules#endpointRuleSet
         \\smithy.rules#contextParam
         \\smithy.rules#clientContextParams
         \\smithy.rules#staticContextParams
+        \\smithy.test#smokeTests
         \\aws.cloudformation#cfnResource
         \\aws.cloudformation#cfnMutability
         \\aws.cloudformation#cfnExcludeProperty
         \\aws.cloudformation#cfnAdditionalIdentifier
         \\aws.endpoints#standardPartitionalEndpoints
+        \\aws.endpoints#dualStackOnlyEndpoints
+        \\aws.endpoints#standardRegionalEndpoints
         \\aws.iam#actionPermissionDescription
         \\aws.iam#requiredActions
         \\aws.iam#conditionKeys
+        \\aws.iam#conditionKeyValue
         \\aws.iam#iamResource
         \\aws.iam#iamAction
         \\aws.iam#supportedPrincipalTypes
