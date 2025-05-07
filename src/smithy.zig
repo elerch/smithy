@@ -235,7 +235,7 @@ const Shape = union(ShapeType) {
         traits: []Trait,
     },
     service: struct {
-        version: []const u8,
+        version: ?[]const u8, // A version is optional in Smithy. https://smithy.io/2.0/spec/service-types.html
         operations: [][]const u8,
         resources: [][]const u8,
         traits: []Trait,
@@ -482,7 +482,7 @@ fn getShape(allocator: std.mem.Allocator, shape: std.json.Value) SmithyParseErro
     if (std.mem.eql(u8, shape_type, "service"))
         return Shape{
             .service = .{
-                .version = shape.object.get("version").?.string,
+                .version = if (shape.object.get("version")) |v| v.string else null,
                 .operations = if (shape.object.get("operations")) |ops|
                     try parseTargetList(allocator, ops.array)
                 else
@@ -894,6 +894,37 @@ fn read_file_to_string(allocator: std.mem.Allocator, file_name: []const u8, max_
 const test_data: []const u8 = @embedFile("test.json");
 const intrinsic_type_count: usize = 15; // 15 intrinsic types are added to every model (see shapes() function)
 
+test "parse service without version" {
+    const test_string =
+        \\ {
+        \\     "smithy": "1.0",
+        \\     "shapes": {
+        \\         "com.amazonaws.sts#AWSSecurityTokenServiceV20110615": {
+        \\             "type": "service",
+        \\             "operations": [
+        \\                 {
+        \\                     "target": "op"
+        \\                 }
+        \\             ]
+        \\         }
+        \\     }
+        \\ }
+        \\
+        \\
+    ;
+
+    const allocator = std.testing.allocator;
+    const model = try parse(allocator, test_string);
+    defer model.deinit();
+    try expect(std.mem.eql(u8, model.version, "1.0"));
+
+    try std.testing.expectEqual(intrinsic_type_count + 1, model.shapes.len);
+    try std.testing.expectEqualStrings("com.amazonaws.sts#AWSSecurityTokenServiceV20110615", model.shapes[0].id);
+    try std.testing.expectEqualStrings("com.amazonaws.sts", model.shapes[0].namespace);
+    try std.testing.expectEqualStrings("AWSSecurityTokenServiceV20110615", model.shapes[0].name);
+    try std.testing.expect(model.shapes[0].member == null);
+    try std.testing.expect(model.shapes[0].shape.service.version == null);
+}
 test "parse string" {
     const test_string =
         \\ {
@@ -924,7 +955,7 @@ test "parse string" {
     try std.testing.expectEqualStrings("com.amazonaws.sts", model.shapes[0].namespace);
     try std.testing.expectEqualStrings("AWSSecurityTokenServiceV20110615", model.shapes[0].name);
     try std.testing.expect(model.shapes[0].member == null);
-    try std.testing.expectEqualStrings("2011-06-15", model.shapes[0].shape.service.version);
+    try std.testing.expectEqualStrings("2011-06-15", model.shapes[0].shape.service.version.?);
 }
 test "parse shape with member" {
     const test_string =
@@ -954,7 +985,7 @@ test "parse shape with member" {
     try std.testing.expectEqualStrings("com.amazonaws.sts#AWSSecurityTokenServiceV20110615$member", model.shapes[0].id);
     try std.testing.expectEqualStrings("com.amazonaws.sts", model.shapes[0].namespace);
     try std.testing.expectEqualStrings("AWSSecurityTokenServiceV20110615", model.shapes[0].name);
-    try std.testing.expectEqualStrings("2011-06-15", model.shapes[0].shape.service.version);
+    try std.testing.expectEqualStrings("2011-06-15", model.shapes[0].shape.service.version.?);
     try std.testing.expectEqualStrings("member", model.shapes[0].member.?);
 }
 test "parse file" {
@@ -979,7 +1010,7 @@ test "parse file" {
     try std.testing.expectEqualStrings("com.amazonaws.sts#AWSSecurityTokenServiceV20110615", svc.id);
     try std.testing.expectEqualStrings("com.amazonaws.sts", svc.namespace);
     try std.testing.expectEqualStrings("AWSSecurityTokenServiceV20110615", svc.name);
-    try std.testing.expectEqualStrings("2011-06-15", svc.shape.service.version);
+    try std.testing.expectEqualStrings("2011-06-15", svc.shape.service.version.?);
     // Should be 6, but we don't handle title or xml namespace
     try std.testing.expectEqual(@as(usize, 4), svc.shape.service.traits.len);
     try std.testing.expectEqual(@as(usize, 8), svc.shape.service.operations.len);
