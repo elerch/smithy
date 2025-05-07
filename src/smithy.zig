@@ -789,6 +789,7 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         \\smithy.api#timestampFormat
         \\smithy.api#xmlAttribute
         \\smithy.api#xmlFlattened
+        \\smithy.api#requestCompression
         \\smithy.waiters#waitable
         \\smithy.rules#endpointTests
         \\smithy.api#input
@@ -809,6 +810,7 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         \\smithy.rules#contextParam
         \\smithy.rules#clientContextParams
         \\smithy.rules#staticContextParams
+        \\smithy.rules#operationContextParams
         \\smithy.test#smokeTests
         \\aws.cloudformation#cfnResource
         \\aws.cloudformation#cfnMutability
