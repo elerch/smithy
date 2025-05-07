@@ -9,17 +9,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: elerch/setup-zig@v3
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Setup Zig
+        uses: https://github.com/mlugg/setup-zig@v1.2.1
         with:
           version: 0.14.0
-      - uses: elerch/zig-action-cache@v1.1.6
+      - name: Restore Zig caches
+        uses: https://github.com/Hanaasagi/zig-action-cache@3954aae427f8b05914e08dfd79f15e1f2e435929
       - name: Build project
         run: zig build --summary all
       - name: Run tests
         run: zig build test --summary all
       - name: Notify
-        uses: elerch/action-notify-ntfy@v2.github
+        uses: https://git.lerch.org/lobo/action-notify-ntfy@v2
         if: always() && env.GITEA_ACTIONS == 'true'
         with:
           host: ${{ secrets.NTFY_HOST }}
