@@ -812,6 +812,7 @@ fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Tra
         \\aws.cloudformation#cfnMutability
         \\aws.cloudformation#cfnExcludeProperty
         \\aws.cloudformation#cfnAdditionalIdentifier
+        \\aws.endpoints#standardPartitionalEndpoints
         \\aws.iam#actionPermissionDescription
         \\aws.iam#requiredActions
         \\aws.iam#conditionKeys
