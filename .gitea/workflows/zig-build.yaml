@@ -14,7 +14,7 @@ jobs:
       - name: Setup Zig
         uses: https://github.com/mlugg/setup-zig@v1.2.1
         with:
-          version: 0.14.0
+          version: 0.15.1
       - name: Restore Zig caches
         uses: https://github.com/Hanaasagi/zig-action-cache@3954aae427f8b05914e08dfd79f15e1f2e435929
       - name: Build project
