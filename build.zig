@@ -15,13 +15,13 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "smithy",
-        // In this case the main source file is merely a path, however, in more
-        // complicated build scripts, this could be a generated file.
-        .root_source_file = b.path("src/smithy.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.addModule("smithy", .{
+            .root_source_file = b.path("src/smithy.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     // This declares intent for the library to be installed into the standard
@@ -29,17 +29,16 @@ pub fn build(b: *std.Build) void {
     // running `zig build`).
     b.installArtifact(lib);
 
-    const module = b.addModule("smithy", .{
-        .root_source_file = b.path("src/smithy.zig"),
-    });
-    lib.root_module.addImport("smithy", module);
+    lib.root_module.addImport("smithy", lib.root_module);
 
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.
     const main_tests = b.addTest(.{
-        .root_source_file = b.path("src/smithy.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.addModule("smithy-test", .{
+            .root_source_file = b.path("src/smithy.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     const run_main_tests = b.addRunArtifact(main_tests);

@@ -285,11 +285,11 @@ pub fn parse(allocator: std.mem.Allocator, json_model: []const u8) !Smithy {
 // list must be deinitialized by caller
 fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
     var list = try std.ArrayList(ShapeInfo).initCapacity(allocator, map.count());
-    defer list.deinit();
+    defer list.deinit(allocator);
     var iterator = map.iterator();
     while (iterator.next()) |kv| {
         const id_info = try parseId(kv.key_ptr.*);
-        try list.append(.{
+        list.appendAssumeCapacity(.{
             .id = id_info.id,
             .namespace = id_info.namespace,
             .name = id_info.name,
@@ -304,7 +304,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
     // https://awslabs.github.io/smithy/1.0/spec/core/model.html#simple-types
     // But I don't see it in the spec. We might need to preload other similar
     // simple types?
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#String",
         .namespace = "smithy.api",
         .name = "String",
@@ -315,7 +315,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Boolean",
         .namespace = "smithy.api",
         .name = "Boolean",
@@ -326,7 +326,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Integer",
         .namespace = "smithy.api",
         .name = "Integer",
@@ -337,7 +337,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Double",
         .namespace = "smithy.api",
         .name = "Double",
@@ -348,7 +348,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Timestamp",
         .namespace = "smithy.api",
         .name = "Timestamp",
@@ -359,7 +359,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Blob",
         .namespace = "smithy.api",
         .name = "Blob",
@@ -370,7 +370,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Unit",
         .namespace = "smithy.api",
         .name = "Unit",
@@ -381,7 +381,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Long",
         .namespace = "smithy.api",
         .name = "Long",
@@ -392,7 +392,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Float",
         .namespace = "smithy.api",
         .name = "Float",
@@ -403,7 +403,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#Document",
         .namespace = "smithy.api",
         .name = "Document",
@@ -419,7 +419,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
     // byte PrimitiveByte
     // short PrimitiveShort
 
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#PrimitiveBoolean",
         .namespace = "smithy.api",
         .name = "PrimitiveBoolean",
@@ -430,7 +430,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#PrimitiveInteger",
         .namespace = "smithy.api",
         .name = "PrimitiveInteger",
@@ -441,7 +441,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#PrimitiveDouble",
         .namespace = "smithy.api",
         .name = "PrimitiveDouble",
@@ -452,7 +452,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#PrimitiveLong",
         .namespace = "smithy.api",
         .name = "PrimitiveLong",
@@ -463,7 +463,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    try list.append(.{
+    try list.append(allocator, .{
         .id = "smithy.api#PrimitiveFloat",
         .namespace = "smithy.api",
         .name = "PrimitiveFloat",
@@ -474,7 +474,7 @@ fn shapes(allocator: std.mem.Allocator, map: anytype) ![]ShapeInfo {
             },
         },
     });
-    return list.toOwnedSlice();
+    return list.toOwnedSlice(allocator);
 }
 
 fn getShape(allocator: std.mem.Allocator, shape: std.json.Value) SmithyParseError!Shape {
@@ -591,26 +591,26 @@ fn parseMembers(allocator: std.mem.Allocator, shape: ?std.json.Value) SmithyPars
 
     const map = shape.?.object;
     var list = std.ArrayList(TypeMember).initCapacity(allocator, map.count()) catch return SmithyParseError.OutOfMemory;
-    defer list.deinit();
+    defer list.deinit(allocator);
     var iterator = map.iterator();
     while (iterator.next()) |kv| {
-        try list.append(TypeMember{
+        list.appendAssumeCapacity(TypeMember{
             .name = kv.key_ptr.*,
             .target = kv.value_ptr.*.object.get("target").?.string,
             .traits = try parseTraits(allocator, kv.value_ptr.*.object.get("traits")),
         });
     }
-    return list.toOwnedSlice();
+    return list.toOwnedSlice(allocator);
 }
 
 // ArrayList of std.Json.Value
 fn parseTargetList(allocator: std.mem.Allocator, list: anytype) SmithyParseError![][]const u8 {
     var array_list = std.ArrayList([]const u8).initCapacity(allocator, list.items.len) catch return SmithyParseError.OutOfMemory;
-    defer array_list.deinit();
+    defer array_list.deinit(allocator);
     for (list.items) |i| {
-        try array_list.append(i.object.get("target").?.string);
+        array_list.appendAssumeCapacity(i.object.get("target").?.string);
     }
-    return array_list.toOwnedSlice();
+    return array_list.toOwnedSlice(allocator);
 }
 fn parseTraitsOnly(allocator: std.mem.Allocator, shape: std.json.Value) SmithyParseError!TraitsOnly {
     return TraitsOnly{
@@ -625,13 +625,13 @@ fn parseTraits(allocator: std.mem.Allocator, shape: ?std.json.Value) SmithyParse
 
     const map = shape.?.object;
     var list = std.ArrayList(Trait).initCapacity(allocator, map.count()) catch return SmithyParseError.OutOfMemory;
-    defer list.deinit();
+    defer list.deinit(allocator);
     var iterator = map.iterator();
     while (iterator.next()) |kv| {
         if (try getTrait(kv.key_ptr.*, kv.value_ptr.*)) |t|
-            try list.append(t);
+            list.appendAssumeCapacity(t);
     }
-    return list.toOwnedSlice();
+    return list.toOwnedSlice(allocator);
 }
 
 fn getTrait(trait_type: []const u8, value: std.json.Value) SmithyParseError!?Trait {
