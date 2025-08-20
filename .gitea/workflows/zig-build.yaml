@@ -12,7 +12,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: Setup Zig
-        uses: https://github.com/mlugg/setup-zig@v1.2.1
+        uses: https://github.com/mlugg/setup-zig@v2.0.1
         with:
           version: 0.15.1
       - name: Restore Zig caches
