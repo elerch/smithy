@@ -2,6 +2,7 @@
     .name = .smithy,
     .version = "1.0.0",
     .fingerprint = 0xccfd3d0281810cb8,
+    .minimum_zig_version = "0.15.1",
     .paths = .{
         "build.zig",
         "build.zig.zon",
