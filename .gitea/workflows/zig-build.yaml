@@ -15,8 +15,6 @@ jobs:
         uses: https://github.com/mlugg/setup-zig@v2.0.5
         with:
           version: 0.15.1
-      - name: Restore Zig caches
-        uses: https://github.com/Hanaasagi/zig-action-cache@3954aae427f8b05914e08dfd79f15e1f2e435929
       - name: Build project
         run: zig build --summary all
       - name: Run tests
